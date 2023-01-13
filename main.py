@@ -1,6 +1,9 @@
+import crypt
 import getopt
 import os
 import sys
+import passlib.hash
+from pyescrypt import pyescrypt
 
 
 def check_if_root_user():
@@ -36,7 +39,7 @@ def check_if_file_exists():
 
 # Main Driver
 if __name__ == "__main__":
-    check_if_root_user()
+    # check_if_root_user()
     file_directory, user_list_args = parse_arguments()
     check_if_file_exists()
 
@@ -46,3 +49,11 @@ if __name__ == "__main__":
     file = open(file_directory, 'r')
     for line in file:
         print(line)
+
+# Yescrypt Implementation (if "$y$)
+password_hash = crypt.crypt("Finalfantasy14-", salt="$y$j9T$1CfDFTUXt5jy5XeLb/zFq0")
+
+# SHA-512 Hash Implementation (if "$6$)
+# password_hash = crypt.crypt("Finalfantasy14-", salt="$6$rounds=65536$9eXQ8Y1U74Zf8ATv")
+print(f"Secret Password: {password_hash}\n")
+
