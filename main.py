@@ -12,10 +12,70 @@ TWO = 2
 BACK_TO_START = 0
 
 
+def algorithm_not_found():
+    print("[+] ALGORITHM_NOT_FOUND_ERROR: This algorithm type is not supported!")
+    print("[+] Now checking for next user...")
+
+
+def check_if_file_exists(file_dir):
+    try:
+        if not os.path.exists(file_dir):
+            sys.exit("[+] ERROR: File Doesn't Exist or Invalid Argument!")
+        else:
+            print(f"[+] Now reading the {file_dir} file...")
+    except FileNotFoundError:
+        sys.exit("[+] ERROR: File Doesn't Exist!")
+
+
 def check_if_root_user():
     if not os.geteuid() == 0:
         sys.exit("[+] ERROR: Only the 'root' user can run this script "
                  "[Please run this script again using sudo command].")
+
+
+def check_user_parameters(user_list):
+    if len(user_list) == ZERO:
+        sys.exit("[+] No users were passed in as arguments!")
+
+
+def check_valid_user(file_entry, user_name, user_list):
+    if '$' not in file_entry and len(user_list) >= TWO:
+        print(f"[+] INVALID USER: {user_name} is a service, utility, or process and cannot be cracked!")
+        print("[+] Now moving on to the next user...")
+        return False
+    elif '$' not in file_entry and len(user_list) < TWO:
+        print(f"[+] INVALID USER: {user_name} is a service, utility, or process and cannot be cracked!")
+        return False
+    else:
+        return True
+
+
+def display_welcome_msg():
+    print(WELCOME_MSG)
+    print(WELCOME_DECORATION)
+
+
+def find_password(file_directory, input_hash, input_salt):
+    try:
+        password_file = open(file_directory, 'r')
+
+        for line in password_file:
+            if crypt.crypt(line.strip(), input_salt) == input_hash:
+                print(f"[+] CRACK COMPLETE: Password has been found!")
+                print(f"[+] The password is {line}")
+                return None
+
+        print(f"[+] CRACK FAILED: Password isn't present in the file provided!")
+    except IOError:
+        sys.exit(f"[+] IOError: Cannot open the following file: {file_directory}")
+
+
+def open_shadow_file(file_dir):
+    try:
+        file = open(file_dir, 'r')
+        return file
+    except IOError:
+        sys.exit(f"[+] IOError: Cannot open the following file: {file_dir}")
 
 
 def parse_arguments():
@@ -45,11 +105,6 @@ def parse_arguments():
     return file_directory, cleansed_user_list_args, password_list
 
 
-def check_user_parameters(user_list):
-    if len(user_list) == ZERO:
-        sys.exit("[+] No users were passed in as arguments!")
-
-
 def remove_duplicate_users(cleansed_user_list_args, orig_user_list_args):
     for user in orig_user_list_args:
         if user not in cleansed_user_list_args:
@@ -58,19 +113,8 @@ def remove_duplicate_users(cleansed_user_list_args, orig_user_list_args):
     print(f"[+] The following users are to have their passwords cracked: {cleansed_user_list_args}")
 
 
-def check_if_file_exists(file_dir):
-    try:
-        if not os.path.exists(file_dir):
-            sys.exit("[+] ERROR: File Doesn't Exist or Invalid Argument!")
-        else:
-            print(f"[+] Now reading the {file_dir} file...")
-    except FileNotFoundError:
-        sys.exit("[+] ERROR: File Doesn't Exist!")
-
-
-def display_welcome_msg():
-    print(WELCOME_MSG)
-    print(WELCOME_DECORATION)
+def remove_user_from_list(user_list):
+    return user_list[1:]
 
 
 def user_not_found_check(user_info, user_list, user_name, file_dir):
@@ -79,38 +123,6 @@ def user_not_found_check(user_info, user_list, user_name, file_dir):
               f"Now moving on to the next user...")
     elif len(selected_user_info) is ZERO and len(user_list) < TWO:
         print(f"\n[+] ERROR: The last user: '{user_name}' has not been found in {file_dir}!")
-
-
-def algorithm_not_found():
-    print("[+] ALGORITHM_NOT_FOUND_ERROR: This algorithm type is not supported!")
-    print("[+] Now checking for next user...")
-
-
-def find_password(file_directory, input_hash, input_salt):
-    try:
-        password_file = open(file_directory, 'r')
-
-        for line in password_file:
-            if crypt.crypt(line.strip(), input_salt) == input_hash:
-                print(f"[+] CRACK COMPLETE: Password has been found!")
-                print(f"[+] The password is {line}")
-                return None
-
-        print(f"[+] CRACK FAILED: Password isn't present in the file provided!")
-    except IOError:
-        sys.exit(f"[+] IOError: Cannot open the following file: {file_directory}")
-
-
-def open_shadow_file(file_dir):
-    try:
-        file = open(file_dir, 'r')
-        return file
-    except IOError:
-        sys.exit(f"[+] IOError: Cannot open the following file: {file_dir}")
-
-
-def remove_user_from_list(user_list):
-    return user_list[1:]
 
 
 # Main Program
@@ -133,8 +145,8 @@ if __name__ == "__main__":
                 print(f"\n[+] {user} has been found! Now attempting to determine a suitable hashing algorithm...")
                 selected_user_info = entry.split('$')
 
-                if '$' not in entry:
-                    print(f"[+] INVALID USER: {user} is a service, utility, or process and cannot be cracked!")
+                # Check if user is valid (and not a service/process/utility)
+                if check_valid_user(entry, user, user_list_args) is False:
                     break
 
                 # Determine the type of algorithm for user and extract salt
@@ -156,8 +168,3 @@ if __name__ == "__main__":
 
         user_not_found_check(selected_user_info, user_list_args, user, file_directory)
         user_list_args = remove_user_from_list(user_list_args)
-
-
-
-
-
