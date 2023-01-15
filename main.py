@@ -70,10 +70,15 @@ def display_welcome_msg():
 
 def user_not_found_check():
     if len(selected_user_info) is ZERO and len(user_list_args) >= TWO:
-        print(f"[+] ERROR: {user} has not been found in {file_directory}! "
+        print(f"\n[+] ERROR: {user} has not been found in {file_directory}! "
               f"Now moving on to the next user...")
     elif len(selected_user_info) is ZERO and len(user_list_args) < TWO:
-        print(f"[+] ERROR: The last user: '{user}' has not been found in {file_directory}!")
+        print(f"\n[+] ERROR: The last user: '{user}' has not been found in {file_directory}!")
+
+
+def algorithm_not_found():
+    print("[+] ERROR: This algorithm type is not supported!")
+    print("[+] Now checking for next user...")
 
 
 # Main Driver
@@ -92,16 +97,20 @@ if __name__ == "__main__":
         file.seek(BACK_TO_START)
         for entry in file:
             if user == entry.split(':')[0]:
-                print(entry)
                 print(f"\n[+] {user} has been found! Now attempting to determine a suitable hashing algorithm...")
                 selected_user_info = entry.split('$')
 
                 # Determine the type of algorithm for user and extract salt
                 algorithm = Algorithms.Algorithm()
-                algorithm.algorithm_checker(selected_user_info[1])
+                if algorithm.algorithm_checker(selected_user_info) == Algorithms.Algorithm.ERROR_CODE:
+                    algorithm_not_found()
+                    break
+                salt = algorithm.extract_salt(selected_user_info[1], entry)
+                print(salt)
 
-
-                print(selected_user_info)
+                # Generate the hash and compare
+                password = crypt.crypt("Finalfantasy14-", salt)
+                print(f"The hash for '{user}' is {password}")
                 break
 
         user_not_found_check()
@@ -126,8 +135,8 @@ if __name__ == "__main__":
 # MD5 Hash Implementation (if "$1$")
 # password_hash = crypt.crypt("Finalfantasy14-", salt="$1$kLZY44Dg")
 
-# BCrypt Hash Implementation (if "$2a$ or $2b$ or $2y$" => can exclude the /)
-# password_hash = crypt.crypt("Finalfantasy14-", salt="$2b$05$7xIm.bug.dew9oh40baZxu8QyOd/")
+# BCrypt Hash Implementation (if "$2a$ or $2b$ or $2y$")
+# password_hash = crypt.crypt("Finalfantasy14-", salt="$2b$05$7xIm.bug.dew9oh40baZxu8QyOd")
 # print(f"Secret Password: {password_hash}\n")
 
 
