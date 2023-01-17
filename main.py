@@ -1,21 +1,28 @@
+import Algorithms
 import crypt
 import getopt
 import os
 import sys
-import Algorithms
+import time
 
-WELCOME_MSG = "A basic single-threaded password cracker program (v1.0) \nJohnny Hui (A00973103)"
+WELCOME_MSG = "A basic single-threaded password cracker program (v1.0) \nBy Johnny Hui (A00973103)"
 WELCOME_DECORATION = "=============================================================================================" \
                      "=============="
 ZERO = 0
 TWO = 2
 BACK_TO_START = 0
 PROGRAM_TERMINATE_MSG_1 = "[+] All users have been processed!"
-PROGRAM_TERMINATE_MSG_2 = "[+] PROGRAM EXIT: Now terminating program..."
+PROGRAM_TERMINATE_MSG_2 = "[+] PROGRAM_EXIT: Now terminating program..."
+
 
 def algorithm_not_found():
     print("[+] ALGORITHM_NOT_FOUND_ERROR: This algorithm type is not supported!")
     print("[+] Now checking for next user...")
+
+
+def check_args(opts):
+    if len(opts) == ZERO:
+        sys.exit("[+] NO_ARG_ERROR: No arguments were passed in!")
 
 
 def check_if_file_exists(file_dir):
@@ -57,7 +64,10 @@ def display_welcome_msg():
 
 
 def find_password(file_directory, input_hash, input_salt, max_attempt):
+    global total_attempts
     attempt = ZERO
+
+    # If no max number of attempts set in command args (-a)
     if max_attempt == ZERO:
         try:
             password_file = open(file_directory, 'r')
@@ -66,15 +76,16 @@ def find_password(file_directory, input_hash, input_salt, max_attempt):
                 if crypt.crypt(line.strip(), input_salt) == input_hash:
                     print(f"[+] CRACK COMPLETE: Password has been found!")
                     print(f"[+] Number of Attempts Made: {attempt}")
-                    print(f"[+] The password is {line}")
-                    return None
+                    total_attempts += attempt
+                    return line.strip()
                 else:
                     attempt += 1
 
+            total_attempts += attempt
             print(f"[+] Number of Attempts Made: {attempt}")
             print(f"[+] CRACK FAILED: Password isn't present in the file provided!")
         except IOError:
-            sys.exit(f"[+] IOError: Cannot open the following password file: {file_directory}!")
+            ioerror_handler(file_directory)
     else:
         try:
             password_file = open(file_directory, 'r')
@@ -82,19 +93,38 @@ def find_password(file_directory, input_hash, input_salt, max_attempt):
             for line in password_file:
                 if crypt.crypt(line.strip(), input_salt) == input_hash:
                     print(f"[+] CRACK COMPLETE: Password has been found!")
-                    print(f"[+] The password is {line}")
-                    return None
+                    total_attempts += attempt
+                    return line.strip()
                 elif attempt == max_attempt:
                     print(f"[+] CRACK FAILED: Max attempts of {attempt} has been reached!")
                     print("[+] Now moving on to the next user...")
+                    total_attempts += attempt
                     return None
                 else:
                     attempt += 1
 
+            total_attempts += attempt
             print(f"[+] Number of Attempts Made: {attempt}")
             print(f"[+] CRACK FAILED: Password isn't present in the file provided!")
         except IOError:
-            sys.exit(f"[+] IOError: Cannot open the following password file: {file_directory}!")
+            ioerror_handler(file_directory)
+
+
+def ioerror_handler(file_directory):
+    if file_directory == "":
+        sys.exit("[+] IOError: No password file has been specified in command args!")
+    else:
+        sys.exit(f"[+] IOError: Cannot open the following password file: {file_directory}!")
+
+
+def init_variables():
+    total_attempts = ZERO
+    start_time = ZERO
+    stop_time = ZERO
+    total_time = ZERO
+    password = ""
+
+    return total_attempts, start_time, stop_time, total_time, password
 
 
 def open_shadow_file(file_dir):
@@ -102,14 +132,17 @@ def open_shadow_file(file_dir):
         file = open(file_dir, 'r')
         return file
     except IOError:
-        sys.exit(f"[+] IOError: Cannot open the following file: {file_dir}")
+        if file_dir == "":
+            sys.exit("[+] IOError: The '/etc/shadow' file is not specified in command args!")
+        else:
+            sys.exit(f"[+] IOError: Cannot open the following file: {file_dir}")
 
 
 def parse_arguments():
     cleansed_user_list_args = []
     file_directory = ""
     password_list = ""
-    max_attempts = 0
+    max_attempts = ZERO
 
     # Remove file name from argument list
     arguments = sys.argv[1:]
@@ -138,9 +171,18 @@ def parse_arguments():
     return file_directory, cleansed_user_list_args, password_list, int(max_attempts)
 
 
-def check_args(opts):
-    if len(opts) == ZERO:
-        sys.exit("[+] NO_ARG_ERROR: No arguments were passed in!")
+def print_end():
+    print(f"\n{WELCOME_DECORATION}")
+    print(PROGRAM_TERMINATE_MSG_1)
+    print(f"[+] Total Number of Attempts: {total_attempts}")
+    print(f"[+] Total Time Elapsed: {round(total_time, 2)} seconds")
+    sys.exit(PROGRAM_TERMINATE_MSG_2)
+
+
+def print_results(elapsed_time, pw):
+    print(f"[+] Time elapsed: {elapsed_time} seconds")
+    if pw is not None:
+        print(f"[+] The password is {pw}")
 
 
 def remove_duplicate_users(cleansed_user_list_args, orig_user_list_args):
@@ -163,16 +205,14 @@ def user_not_found_check(user_info, user_list, user_name, file_dir):
         print(f"\n[+] ERROR: The last user: '{user_name}' has not been found in {file_dir}!")
 
 
-def print_end():
-    print(f"\n{WELCOME_DECORATION}")
-    print(PROGRAM_TERMINATE_MSG_1)
-    print(PROGRAM_TERMINATE_MSG_2)
-
-
 # Main Program
 if __name__ == "__main__":
+    # Declare Variables
+    total_attempts, start_time, stop_time, total_time, password = init_variables()
+
+    # Initialize Program
     display_welcome_msg()
-    # check_if_root_user()
+    check_if_root_user()
     file_directory, user_list_args, password_list_dir, max_attempts = parse_arguments()
     check_if_file_exists(file_directory)
 
@@ -181,6 +221,7 @@ if __name__ == "__main__":
 
     # Check if users exist and handle each
     for user in user_list_args:
+        start_time = time.process_time()
         selected_user_info = ""
         shadow_file.seek(BACK_TO_START)
 
@@ -208,7 +249,13 @@ if __name__ == "__main__":
                 salt = algorithm.extract_salt(selected_user_info[1], entry)
 
                 # Find the password from dictionary
-                find_password(password_list_dir, user_hash, salt, max_attempts)
+                password = find_password(password_list_dir, user_hash, salt, max_attempts)
+
+        stop_time = time.process_time()
+
+        print_results(round(stop_time - start_time, 2), password)
+
+        total_time += (stop_time - start_time)
 
         user_not_found_check(selected_user_info, user_list_args, user, file_directory)
         user_list_args = remove_user_from_list(user_list_args)

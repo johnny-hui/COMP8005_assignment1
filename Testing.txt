@@ -12,6 +12,8 @@ Q: How do I check if the correct hashing algorithm has been made?
         - Enter "sudo passwd [any_name]"
         - Open the file: cat /etc/shadow and check for the "$id$" prefix of the hashing algorithm.
 
-
+Q: How do I run the program (Example)?
+    - sudo python main.py -f /etc/shadow -l /home/johnnyhui/PycharmProjects/COMP8005_assignment1/short_pw_test.txt -a 50
+      test4 test5 johnnyhui
 
 
