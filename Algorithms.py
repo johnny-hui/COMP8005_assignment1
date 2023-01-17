@@ -12,19 +12,19 @@ class Algorithm:
     def algorithm_checker(self, prefix):
         match prefix[1]:
             case self.YESCRYPT:
-                print("[+] Algorithm Used: Yescrypt")
+                print("[+] Algorithm Used: [Yescrypt]")
             case self.SHA_256:
-                print("[+] Algorithm Used: SHA-256")
+                print("[+] Algorithm Used: [SHA-256]")
             case self.SHA_512:
-                print("[+] Algorithm Used: SHA-512")
+                print("[+] Algorithm Used: [SHA-512]")
             case self.MD5:
-                print("[+] Algorithm Used: MD5")
+                print("[+] Algorithm Used: [MD5]")
             case self.BCRYPT_A:
-                print("[+] Algorithm Used: BCrypt")
+                print("[+] Algorithm Used: [BCrypt]")
             case self.BCRYPT_B:
-                print("[+] Algorithm Used: BCrypt")
+                print("[+] Algorithm Used: [BCrypt]")
             case self.BCRYPT_Y:
-                print("[+] Algorithm Used: BCrypt")
+                print("[+] Algorithm Used: [BCrypt]")
             case _:
                 return self.ERROR_CODE
 
