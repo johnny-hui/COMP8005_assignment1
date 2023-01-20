@@ -1,4 +1,5 @@
 import Algorithms
+from Cracker import brute_force
 import crypt
 import getopt
 import os
@@ -11,6 +12,7 @@ WELCOME_DECORATION = "==========================================================
 ZERO = 0
 TWO = 2
 BACK_TO_START = 0
+BRUTE_FORCE_LAUNCH = True
 PROGRAM_TERMINATE_MSG_1 = "[+] All users have been processed!"
 PROGRAM_TERMINATE_MSG_2 = "[+] PROGRAM_EXIT: Now terminating program..."
 
@@ -58,12 +60,7 @@ def check_valid_user(file_entry, user_name, user_list):
         return True
 
 
-def display_welcome_msg():
-    print(WELCOME_MSG)
-    print(WELCOME_DECORATION)
-
-
-def find_password(file_directory, input_hash, input_salt, max_attempt):
+def dictionary_attack(file_directory, input_hash, input_salt, max_attempt):
     global total_attempts
     attempt = ZERO
 
@@ -82,10 +79,10 @@ def find_password(file_directory, input_hash, input_salt, max_attempt):
                     attempt += 1
 
             total_attempts += attempt
-            print(f"[+] Number of Attempts Made: {attempt}")
             print(f"[+] CRACK FAILED: Password isn't present in the file provided!")
         except IOError:
             ioerror_handler(file_directory)
+            return BRUTE_FORCE_LAUNCH
     else:
         try:
             password_file = open(file_directory, 'r')
@@ -104,27 +101,33 @@ def find_password(file_directory, input_hash, input_salt, max_attempt):
                     attempt += 1
 
             total_attempts += attempt
-            print(f"[+] Number of Attempts Made: {attempt}")
             print(f"[+] CRACK FAILED: Password isn't present in the file provided!")
         except IOError:
             ioerror_handler(file_directory)
+            return BRUTE_FORCE_LAUNCH
 
 
 def ioerror_handler(file_directory):
     if file_directory == "":
-        sys.exit("[+] IOError: No password file has been specified in command args!")
+        print("[+] IOError: No password file has been specified in command args!")
     else:
-        sys.exit(f"[+] IOError: Cannot open the following password file: {file_directory}!")
+        print(f"[+] IOError: Cannot open the following password file: {file_directory}!")
+
+
+def display_welcome_msg():
+    print(WELCOME_MSG)
+    print(WELCOME_DECORATION)
 
 
 def init_variables():
+    brute_force_attempts = ZERO
     total_attempts = ZERO
+    password = ""
     start_time = ZERO
     stop_time = ZERO
     total_time = ZERO
-    password = ""
 
-    return total_attempts, start_time, stop_time, total_time, password
+    return total_attempts, brute_force_attempts, start_time, stop_time, total_time, password
 
 
 def open_shadow_file(file_dir):
@@ -166,23 +169,24 @@ def parse_arguments():
         if opt == '-l':
             password_list = argument
         if opt == '-a':
-            max_attempts = argument
+            try:
+                max_attempts = int(argument)
+            except ValueError:
+                sys.exit(f"[+] Invalid Argument for -a option!")
 
-    return file_directory, cleansed_user_list_args, password_list, int(max_attempts)
+    return file_directory, cleansed_user_list_args, password_list, max_attempts
 
 
 def print_end():
     print(f"\n{WELCOME_DECORATION}")
     print(PROGRAM_TERMINATE_MSG_1)
-    print(f"[+] Total Number of Attempts: {total_attempts}")
+    print(f"[+] Total Number of Attempts: {total_attempts + brute_force_attempts}")
     print(f"[+] Total Time Elapsed: {round(total_time, 2)} seconds")
-    sys.exit(PROGRAM_TERMINATE_MSG_2)
+    print(PROGRAM_TERMINATE_MSG_2)
 
 
-def print_results(elapsed_time, pw):
+def print_results(elapsed_time):
     print(f"[+] Time elapsed: {elapsed_time} seconds")
-    if pw is not None:
-        print(f"[+] The password is {pw}")
 
 
 def remove_duplicate_users(cleansed_user_list_args, orig_user_list_args):
@@ -208,11 +212,11 @@ def user_not_found_check(user_info, user_list, user_name, file_dir):
 # Main Program
 if __name__ == "__main__":
     # Declare Variables
-    total_attempts, start_time, stop_time, total_time, password = init_variables()
+    total_attempts, brute_force_attempts, start_time, stop_time, total_time, password = init_variables()
 
     # Initialize Program
     display_welcome_msg()
-    check_if_root_user()
+    # check_if_root_user()
     file_directory, user_list_args, password_list_dir, max_attempts = parse_arguments()
     check_if_file_exists(file_directory)
 
@@ -248,13 +252,18 @@ if __name__ == "__main__":
                 # Retrieve the salt
                 salt = algorithm.extract_salt(selected_user_info[1], entry)
 
-                # Find the password from dictionary
-                password = find_password(password_list_dir, user_hash, salt, max_attempts)
+                # Find the password (via. dictionary attack)
+                password = dictionary_attack(password_list_dir, user_hash, salt, max_attempts)
+
+                # Use Brute-Force if dictionary fails or Password File is not
+                if (password is None) or (password is BRUTE_FORCE_LAUNCH):
+                    password, brute_force_attempts = brute_force(salt, user_hash)
+                    print(f"[+] The password is {password}")
+                else:
+                    print(f"[+] The password is {password}")
 
         stop_time = time.process_time()
-
-        print_results(round(stop_time - start_time, 2), password)
-
+        print_results(round(stop_time - start_time, 2))
         total_time += (stop_time - start_time)
 
         user_not_found_check(selected_user_info, user_list_args, user, file_directory)
