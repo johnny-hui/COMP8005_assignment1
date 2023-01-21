@@ -9,6 +9,8 @@ import time
 WELCOME_MSG = "A basic single-threaded password cracker program (v1.0) \nBy Johnny Hui (A00973103)"
 WELCOME_DECORATION = "=============================================================================================" \
                      "=============="
+DICTIONARY_ATK_MSG = "[+] [ATTACK 1]: Now beginning the cracking " \
+                     "process with a Dictionary Attack..."
 ZERO = 0
 TWO = 2
 BACK_TO_START = 0
@@ -78,8 +80,9 @@ def dictionary_attack(file_directory, input_hash, input_salt, max_attempt):
                 else:
                     attempt += 1
 
-            total_attempts += attempt
             print(f"[+] CRACK FAILED: Password isn't present in the file provided!")
+            print(f"[+] Number of Attempts Made: {attempt}")
+            total_attempts += attempt
         except IOError:
             ioerror_handler(file_directory)
             return BRUTE_FORCE_LAUNCH
@@ -94,14 +97,14 @@ def dictionary_attack(file_directory, input_hash, input_salt, max_attempt):
                     return line.strip()
                 elif attempt == max_attempt:
                     print(f"[+] CRACK FAILED: Max attempts of {attempt} has been reached!")
-                    print("[+] Now moving on to the next user...")
                     total_attempts += attempt
                     return None
                 else:
                     attempt += 1
 
-            total_attempts += attempt
             print(f"[+] CRACK FAILED: Password isn't present in the file provided!")
+            print(f"[+] Number of Attempts Made: {attempt}")
+            total_attempts += attempt
         except IOError:
             ioerror_handler(file_directory)
             return BRUTE_FORCE_LAUNCH
@@ -121,13 +124,14 @@ def display_welcome_msg():
 
 def init_variables():
     brute_force_attempts = ZERO
+    total_brute_force_attempts = ZERO
     total_attempts = ZERO
     password = ""
     start_time = ZERO
     stop_time = ZERO
     total_time = ZERO
 
-    return total_attempts, brute_force_attempts, start_time, stop_time, total_time, password
+    return total_attempts, brute_force_attempts, total_brute_force_attempts, start_time, stop_time, total_time, password
 
 
 def open_shadow_file(file_dir):
@@ -171,6 +175,7 @@ def parse_arguments():
         if opt == '-a':
             try:
                 max_attempts = int(argument)
+                print(f"[+] MAX ATTEMPTS for each algorithm: {max_attempts}")
             except ValueError:
                 sys.exit(f"[+] Invalid Argument for -a option!")
 
@@ -180,9 +185,20 @@ def parse_arguments():
 def print_end():
     print(f"\n{WELCOME_DECORATION}")
     print(PROGRAM_TERMINATE_MSG_1)
-    print(f"[+] Total Number of Attempts: {total_attempts + brute_force_attempts}")
+    print(f"[+] Total Number of Attempts: {total_attempts + total_brute_force_attempts}")
     print(f"[+] Total Time Elapsed: {round(total_time, 2)} seconds")
     print(PROGRAM_TERMINATE_MSG_2)
+
+
+def process_statistics(pw):
+    global stop_time, total_time
+
+    stop_time = time.process_time()
+    print_results(round(stop_time - start_time, 2))
+    total_time += (stop_time - start_time)
+
+    if pw != "":
+        print(f"[+] The password is {pw}")
 
 
 def print_results(elapsed_time):
@@ -203,20 +219,23 @@ def remove_user_from_list(user_list):
 
 def user_not_found_check(user_info, user_list, user_name, file_dir):
     if len(user_info) is ZERO and len(user_list) >= TWO:
-        print(f"[+] ERROR: {user_name} has not been found in {file_dir}! "
+        print(f"\n[+] ERROR: {user_name} has not been found in {file_dir}! "
               f"Now moving on to the next user...\n")
+        return True
     elif len(selected_user_info) is ZERO and len(user_list) < TWO:
         print(f"\n[+] ERROR: The last user: '{user_name}' has not been found in {file_dir}!")
+        return True
 
 
 # Main Program
 if __name__ == "__main__":
     # Declare Variables
-    total_attempts, brute_force_attempts, start_time, stop_time, total_time, password = init_variables()
+    total_attempts, brute_force_attempts, total_brute_force_attempts, start_time, stop_time, total_time, \
+        password = init_variables()
 
     # Initialize Program
     display_welcome_msg()
-    # check_if_root_user()
+    check_if_root_user()
     file_directory, user_list_args, password_list_dir, max_attempts = parse_arguments()
     check_if_file_exists(file_directory)
 
@@ -227,6 +246,7 @@ if __name__ == "__main__":
     for user in user_list_args:
         start_time = time.process_time()
         selected_user_info = ""
+        password = ""
         shadow_file.seek(BACK_TO_START)
 
         for entry in shadow_file:
@@ -244,7 +264,7 @@ if __name__ == "__main__":
                     algorithm_not_found()
                     break
 
-                print("[+] Now beginning the cracking process...")
+                print(DICTIONARY_ATK_MSG)
 
                 # Retrieve the Hash
                 user_hash = entry.split(':')[1]
@@ -257,16 +277,14 @@ if __name__ == "__main__":
 
                 # Use Brute-Force if dictionary fails or Password File is not
                 if (password is None) or (password is BRUTE_FORCE_LAUNCH):
-                    password, brute_force_attempts = brute_force(salt, user_hash)
-                    print(f"[+] The password is {password}")
-                else:
-                    print(f"[+] The password is {password}")
+                    password, brute_force_attempts = brute_force(salt, user_hash, max_attempts)
+                    total_brute_force_attempts += brute_force_attempts
 
-        stop_time = time.process_time()
-        print_results(round(stop_time - start_time, 2))
-        total_time += (stop_time - start_time)
+        if user_not_found_check(selected_user_info, user_list_args, user, file_directory):
+            pass
+        else:
+            process_statistics(password)
 
-        user_not_found_check(selected_user_info, user_list_args, user, file_directory)
         user_list_args = remove_user_from_list(user_list_args)
 
     # Program Terminate

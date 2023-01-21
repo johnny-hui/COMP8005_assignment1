@@ -4,10 +4,11 @@ import itertools
 ZERO = 0
 START_LENGTH = 1
 MAX_CHAR_LENGTH = 9999
+BRUTE_FORCE_ATK_MSG = "[+] [ATTACK 2]: Now launching a Brute Force Attack. Please wait..."
 
 
-def brute_force(salt, user_hash):
-    print("[+] Now launching a Brute Force Attack. Please wait...")
+def brute_force(salt, user_hash, max_attempts):
+    print(BRUTE_FORCE_ATK_MSG)
     attempts = ZERO
 
     characters_map = ('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '=', "'\'", '/', '.',
@@ -25,6 +26,12 @@ def brute_force(salt, user_hash):
 
             if crypt.crypt(password, salt) == user_hash:
                 print(f"[+] CRACK COMPLETE: Password has been found!")
+                print(f"[+] Number of Attempts Made: {attempts}")
+                return password, attempts
+
+            if attempts == max_attempts:
+                print(f"[+] CRACK FAILED: Max attempts of {max_attempts} has been reached!")
+                password = None
                 return password, attempts
 
             # print(f"[+] Attempt {attempts}: {password}")
