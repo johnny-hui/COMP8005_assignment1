@@ -235,7 +235,7 @@ if __name__ == "__main__":
 
     # Initialize Program
     display_welcome_msg()
-    check_if_root_user()
+    # check_if_root_user()
     file_directory, user_list_args, password_list_dir, max_attempts = parse_arguments()
     check_if_file_exists(file_directory)
 
