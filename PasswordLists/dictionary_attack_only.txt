@@ -17,6 +17,7 @@ master
 football
 1234567890
 000000
+8pw
 computer
 666666
 superman
@@ -866,6 +867,7 @@ racing
 qazxsw
 philips
 oscar
+mnm
 minnie
 lalala
 ironman
@@ -902,6 +904,7 @@ freeman
 charlie1
 cardinal
 bluemoon
+abc
 bbbbbb
 bastard
 alyssa
@@ -952,6 +955,7 @@ russell
 robinson
 oracle
 millie
+123
 maddog
 lightning
 kingston
@@ -1126,6 +1130,7 @@ hendrix
 hellfire
 happy1
 guardian
+eze
 flamingo
 enter
 chichi

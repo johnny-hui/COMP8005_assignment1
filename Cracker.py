@@ -36,5 +36,4 @@ def brute_force(salt, user_hash, max_attempts):
 
             # print(f"[+] Attempt {attempts}: {password}")
 
-
 # SOURCE USED: https://stackoverflow.com/questions/40269605/how-to-create-a-brute-force-password-cracker-for-alphabetical-and-alphanumerical

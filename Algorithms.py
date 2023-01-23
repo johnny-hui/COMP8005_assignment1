@@ -1,3 +1,6 @@
+import crypt
+
+
 class Algorithm:
     YESCRYPT = 'y'
     SHA_256 = '5'
@@ -22,7 +25,7 @@ class Algorithm:
             case self.BCRYPT_A:
                 print("[+] Algorithm Used: [BCrypt]")
             case self.BCRYPT_B:
-                print("[+] Algorithm Used: [BCrypt]")
+                print("[+] Algorithm Used: [BCrypt/Blowfish]")
             case self.BCRYPT_Y:
                 print("[+] Algorithm Used: [BCrypt]")
             case _:

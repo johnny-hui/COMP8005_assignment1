@@ -272,7 +272,7 @@ if __name__ == "__main__":
                 # Retrieve the salt
                 salt = algorithm.extract_salt(selected_user_info[1], entry)
 
-                # Find the password (via. dictionary attack)
+                # # Find the password (via. dictionary attack)
                 password = dictionary_attack(password_list_dir, user_hash, salt, max_attempts)
 
                 # Use Brute-Force if dictionary fails or Password File is not
